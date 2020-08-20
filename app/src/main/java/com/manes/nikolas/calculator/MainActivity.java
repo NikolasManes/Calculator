@@ -1,10 +1,13 @@
 package com.manes.nikolas.calculator;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -253,10 +256,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             case R.id.per_cent_button:
                 try {
-                    double perCent, memNo, screenNo;
-                    memNo = Double.valueOf(numInMemory);
-                    screenNo = Double.valueOf(numOnScreen);
-                    perCent = (memNo*screenNo)/100;
+                    BigDecimal perCent, memNo, screenNo;
+                    memNo = new BigDecimal(numInMemory);
+                    screenNo = new BigDecimal(numOnScreen);
+                    perCent = (memNo.multiply(screenNo)).divide(BigDecimal.valueOf(100));
                     // Convert result to String
                     numOnScreen = String.valueOf(perCent);
                     screenNumberText.setText(decimalFormat.format(perCent));
@@ -337,13 +340,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Used when the numerical buttons are pressed
     private void writeOnScreen(Button button){
         // If the last button pressed is "=" it means the expression has ended and a new one started
+        screenNumberText.setTextSize(50);
         if (lastButtonPressed == "="){
             // ...so initialize again the expressionStringBuilder
             expressionStringBuilder = new StringBuilder();
             expressionText.setText("");
         }
         // Check the length of the number so it doesn't goes off screen
-        if (mainScreenStringBuilder.length() < 11){
+        if (mainScreenStringBuilder.length() < 12){
             // Add the number of the button pressed at the end of the mainScreenStringBuilder
             mainScreenStringBuilder.append(button.getText());
             // Convert it to string
@@ -415,33 +419,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // If both numbers are not empty Strings proceed with the operation
         else {
             try {
-                // Convert strings to doubles
-                double numberA = Double.valueOf(memoryNo);
-                double numberB = Double.valueOf(screenNo);
+                // Convert Strings to BigDecimals
+                BigDecimal numberA = new BigDecimal(memoryNo);
+                BigDecimal numberB = new BigDecimal(screenNo);
                 // Initialize the result of the operation
-                double result = 0;
+                BigDecimal result = BigDecimal.valueOf(0);
                 // Use a switch statement to choose the right operation
                 switch (operator){
                     // Addition
                     case "+":
-                        result = numberA + numberB;
+                        result = numberA.add(numberB);
                         break;
                     // Subtraction
                     case "-":
-                        result = numberA - numberB;
+                        result = numberA.subtract(numberB);
                         break;
                     // Multiplication
                     case "x":
-                        result = numberA * numberB;
+                        result = numberA.multiply(numberB);
                         break;
                     // Division
                     case "/":
-                        result = numberA / numberB;
+                        if (numberB.equals(BigDecimal.valueOf(0))){
+                            // Show a message on expression screen
+                            expressionText.setText("Please refer to limits and infinity...");
+                            break;
+                        }
+                        result = numberA.divide(numberB, 10, RoundingMode.HALF_UP);
                         break;
                 }
                 // Convert result to String
                 numOnScreen = String.valueOf(result);
                 // Show it on screen
+                if (numOnScreen.length() > 12){
+                    screenNumberText.setTextSize(20);
+                } else {
+                    screenNumberText.setTextSize(50);
+                }
                 screenNumberText.setText(decimalFormat.format(result));
                 // Clear memory and initialize again the mainScreenStringBuilder
                 mainScreenStringBuilder = new StringBuilder();
